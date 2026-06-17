@@ -46,6 +46,9 @@ jobs:
               names = set(package.namelist())
               if plugin_path not in names:
                   sys.exit(f"{plugin_path} is missing from ZIP")
+              nested_zips = sorted(name for name in names if name.endswith(".zip"))
+              if nested_zips:
+                  sys.exit(f"nested ZIP files are not allowed: {nested_zips}")
               plugin_header = package.read(plugin_path).decode("utf-8", errors="replace")
 
           match = re.search(r"^\s*\*\s*Version:\s*(.+?)\s*$", plugin_header, re.MULTILINE)
