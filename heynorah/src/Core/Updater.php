@@ -12,6 +12,7 @@ namespace HeyNorah\Core;
 class Updater
 {
     private const MANIFEST_URL = 'https://raw.githubusercontent.com/fuelmedia/heynorah-plugin/main/update.json';
+    private const UPDATE_URI = 'https://github.com/fuelmedia/heynorah-plugin';
 
     private string $pluginBasename;
     private string $pluginSlug;
@@ -24,8 +25,39 @@ class Updater
 
     public function register(): void
     {
+        add_filter('update_plugins_github.com', [$this, 'filter_update_uri'], 10, 4);
         add_filter('pre_set_site_transient_update_plugins', [$this, 'inject_update']);
         add_filter('plugins_api', [$this, 'plugin_information'], 20, 3);
+    }
+
+    /**
+     * WordPress 5.8+ calls this for plugins with an `Update URI` header.
+     *
+     * @param array<string,mixed>|false $update
+     * @param array<string,mixed> $plugin_data
+     * @param string $plugin_file
+     * @param string[] $locales
+     * @return array<string,mixed>|false
+     */
+    public function filter_update_uri($update, array $plugin_data, string $plugin_file, array $locales)
+    {
+        unset($locales);
+
+        if ($plugin_file !== $this->pluginBasename) {
+            return $update;
+        }
+
+        $manifest = $this->fetch_manifest(true);
+        if (!$manifest) {
+            return $update;
+        }
+
+        $payload = $this->build_update_payload($manifest, (string) ($plugin_data['Version'] ?? $this->current_version()));
+        if (!$payload) {
+            return $update;
+        }
+
+        return (array) $payload;
     }
 
     /**
@@ -39,38 +71,34 @@ class Updater
         }
         /** @var \stdClass $transient */
 
-        $manifest = $this->fetch_manifest();
+        $manifest = $this->fetch_manifest(true);
         if (!$manifest) {
             return $transient;
         }
 
-        $latest_version = (string) ($manifest['version'] ?? '');
-        $package_url = (string) ($manifest['package_url'] ?? '');
-
-        if ($latest_version === '' || $package_url === '') {
+        $payload = $this->build_update_payload($manifest, $this->current_version());
+        if (!$payload) {
             return $transient;
         }
-
-        if (!version_compare($latest_version, $this->current_version(), '>')) {
-            return $transient;
-        }
-
-        $update = (object) [
-            'id' => $this->pluginBasename,
-            'slug' => $this->pluginSlug,
-            'plugin' => $this->pluginBasename,
-            'new_version' => $latest_version,
-            'url' => (string) ($manifest['homepage'] ?? 'https://github.com/fuelmedia/heynorah-plugin'),
-            'package' => esc_url_raw($package_url),
-            'tested' => (string) ($manifest['tested'] ?? ''),
-            'requires_php' => (string) ($manifest['requires_php'] ?? '8.2'),
-        ];
 
         if (!isset($transient->response) || !is_array($transient->response)) {
             $transient->response = [];
         }
+        if (!isset($transient->no_update) || !is_array($transient->no_update)) {
+            $transient->no_update = [];
+        }
+        if (!isset($transient->checked) || !is_array($transient->checked)) {
+            $transient->checked = [];
+        }
 
-        $transient->response[$this->pluginBasename] = $update;
+        $transient->checked[$this->pluginBasename] = $this->current_version();
+        unset($transient->response[$this->pluginBasename], $transient->no_update[$this->pluginBasename]);
+
+        if (version_compare($payload->new_version, $this->current_version(), '>')) {
+            $transient->response[$this->pluginBasename] = $payload;
+        } else {
+            $transient->no_update[$this->pluginBasename] = $payload;
+        }
 
         return $transient;
     }
@@ -87,7 +115,7 @@ class Updater
             return $result;
         }
 
-        $manifest = $this->fetch_manifest();
+        $manifest = $this->fetch_manifest(true);
         if (!$manifest) {
             return $result;
         }
@@ -112,10 +140,10 @@ class Updater
     /**
      * @return array<string, mixed>|null
      */
-    private function fetch_manifest(): ?array
+    private function fetch_manifest(bool $force_refresh = false): ?array
     {
         $cache_key = 'heynorah_plugin_update_manifest';
-        $cached = get_site_transient($cache_key);
+        $cached = $force_refresh ? null : get_site_transient($cache_key);
 
         if (is_array($cached)) {
             return $cached;
@@ -144,9 +172,39 @@ class Updater
             return null;
         }
 
-        set_site_transient($cache_key, $decoded, 6 * HOUR_IN_SECONDS);
+        set_site_transient($cache_key, $decoded, HOUR_IN_SECONDS);
 
         return $decoded;
+    }
+
+    /**
+     * @param array<string,mixed> $manifest
+     */
+    private function build_update_payload(array $manifest, string $installed_version): ?object
+    {
+        $latest_version = (string) ($manifest['version'] ?? '');
+        $package_url = (string) ($manifest['package_url'] ?? '');
+
+        if ($latest_version === '' || $package_url === '') {
+            return null;
+        }
+
+        return (object) [
+            'id' => self::UPDATE_URI,
+            'slug' => $this->pluginSlug,
+            'plugin' => $this->pluginBasename,
+            'version' => $latest_version,
+            'new_version' => $latest_version,
+            'url' => (string) ($manifest['homepage'] ?? self::UPDATE_URI),
+            'package' => esc_url_raw($package_url),
+            'tested' => (string) ($manifest['tested'] ?? ''),
+            'requires_php' => (string) ($manifest['requires_php'] ?? '8.2'),
+            'icons' => [],
+            'banners' => [],
+            'banners_rtl' => [],
+            'compatibility' => new \stdClass(),
+            'autoupdate' => version_compare($latest_version, $installed_version, '>'),
+        ];
     }
 
     private function current_version(): string

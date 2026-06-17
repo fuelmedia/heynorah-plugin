@@ -93,11 +93,11 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release edit "$TAG" \
               --title "HeyNorah ${VERSION}" \
-              --notes "Public distribution package for HeyNorah ${VERSION}."
+              --notes-file CHANGELOG.md
             gh release upload "$TAG" heynorah.zip update.json --clobber
           else
             gh release create "$TAG" heynorah.zip update.json \
               --target "$GITHUB_SHA" \
               --title "HeyNorah ${VERSION}" \
-              --notes "Public distribution package for HeyNorah ${VERSION}."
+              --notes-file CHANGELOG.md
           fi

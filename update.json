@@ -1,11 +1,11 @@
 {
   "name": "HeyNorah",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "author": "HeyNorah AI",
   "homepage": "https://github.com/fuelmedia/heynorah-plugin",
   "package_url": "https://raw.githubusercontent.com/fuelmedia/heynorah-plugin/main/heynorah.zip",
   "requires_php": "8.2",
   "tested": "6.9",
   "description": "HeyNorah WordPress inventory connector.",
-  "changelog": "See the HeyNorah release notes for details."
+  "changelog": "# Changelog\n\n## 2.0.2 - 2026-06-18\n\n- Fixed WordPress update discovery for HeyNorah installs that use the `Update URI` plugin header.\n- Added the WordPress `update_plugins_github.com` update hook so WordPress 5.8+ can discover public HeyNorah releases correctly.\n- Bypassed stale manifest cache during update checks and plugin details requests.\n- Added release notes to the WordPress version details modal before updating.\n\n## 2.0.1 - 2026-06-18\n\n- Published the first public distribution package with an installable ZIP and update manifest.\n"
 }
