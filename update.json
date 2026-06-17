@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "author": "HeyNorah AI",
   "homepage": "https://github.com/fuelmedia/heynorah-plugin",
-  "package_url": "https://raw.githubusercontent.com/fuelmedia/heynorah-plugin/main/heynorah-v2-plugin.zip",
+  "package_url": "https://raw.githubusercontent.com/fuelmedia/heynorah-plugin/main/heynorah.zip",
   "requires_php": "8.2",
   "tested": "6.9",
   "description": "HeyNorah WordPress inventory connector.",

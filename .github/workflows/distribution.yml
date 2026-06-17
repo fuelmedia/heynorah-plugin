@@ -1,0 +1,97 @@
+name: Distribution
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Validate package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate manifest and ZIP
+        run: |
+          python3 <<'PY'
+          import json
+          import pathlib
+          import re
+          import sys
+          import zipfile
+
+          root = pathlib.Path(".")
+          manifest_path = root / "update.json"
+          package_path = root / "heynorah.zip"
+          plugin_path = "heynorah/heynorah.php"
+
+          manifest = json.loads(manifest_path.read_text())
+          version = manifest.get("version")
+          package_url = manifest.get("package_url")
+
+          if not version:
+              sys.exit("update.json is missing version")
+          if package_url != "https://raw.githubusercontent.com/fuelmedia/heynorah-plugin/main/heynorah.zip":
+              sys.exit(f"unexpected package_url: {package_url}")
+          if not package_path.exists():
+              sys.exit("heynorah.zip is missing")
+
+          with zipfile.ZipFile(package_path) as package:
+              names = set(package.namelist())
+              if plugin_path not in names:
+                  sys.exit(f"{plugin_path} is missing from ZIP")
+              plugin_header = package.read(plugin_path).decode("utf-8", errors="replace")
+
+          match = re.search(r"^\s*\*\s*Version:\s*(.+?)\s*$", plugin_header, re.MULTILINE)
+          if not match:
+              sys.exit("Plugin Version header is missing")
+          plugin_version = match.group(1)
+          if plugin_version != version:
+              sys.exit(f"ZIP version {plugin_version} does not match update.json {version}")
+          if "Update URI: https://github.com/fuelmedia/heynorah-plugin" not in plugin_header:
+              sys.exit("Plugin Update URI header is missing")
+          PY
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: heynorah-wordpress-plugin
+          path: |
+            heynorah.zip
+            update.json
+
+  release:
+    name: Publish GitHub release
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: |
+          version="$(python3 -c 'import json; print(json.load(open("update.json"))["version"])')"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" heynorah.zip update.json --clobber
+          else
+            gh release create "$TAG" heynorah.zip update.json \
+              --target "$GITHUB_SHA" \
+              --title "HeyNorah WordPress Plugin ${VERSION}" \
+              --notes "Public distribution package for HeyNorah WordPress Plugin ${VERSION}."
+          fi
