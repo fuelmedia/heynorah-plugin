@@ -11,6 +11,7 @@ use WP_Error;
 use HeyNorah\Services\SettingsService;
 use HeyNorah\Services\OrganizationService;
 use HeyNorah\Services\AuditLogService;
+use HeyNorah\Services\DomainChallengeService;
 use HeyNorah\Core\Plugin;
 
 class ToolsController extends WP_REST_Controller
@@ -18,12 +19,14 @@ class ToolsController extends WP_REST_Controller
     private SettingsService $settingsService;
     private OrganizationService $organizationService;
     private AuditLogService $auditLog;
+    private DomainChallengeService $domainChallengeService;
 
     public function __construct()
     {
         $this->settingsService = new SettingsService();
         $this->organizationService = new OrganizationService();
         $this->auditLog = new AuditLogService();
+        $this->domainChallengeService = new DomainChallengeService($this->settingsService);
     }
 
     public function register_routes(): void
@@ -190,6 +193,50 @@ class ToolsController extends WP_REST_Controller
         if (!empty($response['success'])) {
             $response_data = is_array($response['data'] ?? null) ? $response['data'] : [];
             $validated = !empty($response_data['validated']);
+            if (!$validated) {
+                $verify_result = $this->run_domain_verify_flow($api_key, $response_data);
+                if (!$verify_result['success']) {
+                    $verify_error = trim((string) ($verify_result['message'] ?? 'Domain verification failed.'));
+                    $response_data['validated'] = false;
+                    $connect_webhook = is_array($response_data['webhook'] ?? null)
+                        ? $response_data['webhook']
+                        : [];
+                    $response_data['webhook'] = array_merge($connect_webhook, [
+                        'lastVerifyError' => $verify_error,
+                    ]);
+                    $this->persist_connection_data($response_data, $verify_error);
+
+                    return new WP_Error(
+                        'rest_domain_verification_failed',
+                        'Connection reached HeyNorah, but domain verification failed: ' . $verify_error,
+                        ['status' => 400]
+                    );
+                }
+
+                $verify_response = is_array($verify_result['verify_response'] ?? null)
+                    ? $verify_result['verify_response']
+                    : [];
+                $verify_data = is_array($verify_response['data'] ?? null)
+                    ? $verify_response['data']
+                    : [];
+                $verify_webhook = is_array($verify_data['webhook'] ?? null)
+                    ? $verify_data['webhook']
+                    : [];
+                if (!empty($verify_webhook)) {
+                    $connect_webhook = is_array($response_data['webhook'] ?? null)
+                        ? $response_data['webhook']
+                        : [];
+                    $response_data['webhook'] = array_merge($connect_webhook, $verify_webhook);
+                }
+
+                $validated = array_key_exists('validated', $verify_data)
+                    ? !empty($verify_data['validated'])
+                    : true;
+                $response_data['validated'] = $validated;
+            }
+
+            $this->persist_connection_data($response_data, '');
+
             return rest_ensure_response([
                 'success' => true,
                 'message' => $validated
@@ -208,6 +255,83 @@ class ToolsController extends WP_REST_Controller
             'Connection failed. ' . (string) ($response['error'] ?? 'Please check your API key.'),
             array('status' => 400)
         );
+    }
+
+    /**
+     * @param array<string, mixed> $connect_data
+     * @return array{success:bool,message:string,verify_response:array<string,mixed>}
+     */
+    private function run_domain_verify_flow(string $api_key, array $connect_data): array
+    {
+        $webhook = is_array($connect_data['webhook'] ?? null) ? $connect_data['webhook'] : [];
+        $endpoint_key = sanitize_text_field((string) ($webhook['endpointKey'] ?? ''));
+        $challenge = [];
+        if (isset($webhook['challenge']) && is_array($webhook['challenge'])) {
+            $challenge = $webhook['challenge'];
+        } elseif (isset($connect_data['challenge']) && is_array($connect_data['challenge'])) {
+            $challenge = $connect_data['challenge'];
+        }
+
+        $challenge_id = sanitize_text_field((string) ($challenge['id'] ?? ($webhook['challengeId'] ?? '')));
+        $challenge_token = (string) ($challenge['token'] ?? ($webhook['challengeToken'] ?? ''));
+        $challenge_url = (string) ($challenge['url'] ?? ($webhook['challengeUrl'] ?? ''));
+        $challenge_expires_at = (string) ($challenge['expiresAt'] ?? ($webhook['challengeExpiresAt'] ?? ''));
+
+        if ($endpoint_key === '' || $challenge_id === '') {
+            $error = 'Missing endpointKey or challengeId for verify-domain flow.';
+            $this->settingsService->save_verify_result(false, $error);
+
+            return [
+                'success' => false,
+                'message' => $error,
+                'verify_response' => [],
+            ];
+        }
+
+        $this->domainChallengeService->publish_challenge([
+            'id' => $challenge_id,
+            'token' => $challenge_token,
+            'url' => $challenge_url,
+            'expiresAt' => $challenge_expires_at,
+        ]);
+
+        $verify_response = $this->organizationService->verify_domain($api_key, $endpoint_key, $challenge_id);
+        if (!$verify_response['success']) {
+            $error = (string) ($verify_response['error'] ?? 'Verify domain failed');
+            $this->settingsService->save_verify_result(false, $error);
+
+            return [
+                'success' => false,
+                'message' => $error,
+                'verify_response' => $verify_response,
+            ];
+        }
+
+        $verify_data = is_array($verify_response['data'] ?? null) ? $verify_response['data'] : [];
+        $is_verified = array_key_exists('validated', $verify_data)
+            ? !empty($verify_data['validated'])
+            : true;
+        if (isset($verify_data['webhook']) && is_array($verify_data['webhook'])) {
+            $this->settingsService->update_webhook_meta($verify_data['webhook']);
+        }
+
+        $this->settingsService->save_verify_result($is_verified, $is_verified ? '' : 'Domain verify pending');
+
+        return [
+            'success' => $is_verified,
+            'message' => $is_verified ? 'Domain verification completed.' : 'Domain verification pending.',
+            'verify_response' => $verify_response,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $connection_data
+     */
+    private function persist_connection_data(array $connection_data, string $error): void
+    {
+        $this->settingsService->clear_connection_data();
+        $this->settingsService->save_connection_data($connection_data);
+        $this->settingsService->save_connect_error($error);
     }
 
     public function clear_all_settings(WP_REST_Request $request): WP_REST_Response

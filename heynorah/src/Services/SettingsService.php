@@ -514,8 +514,19 @@ class SettingsService
                 : []
             );
 
+        $inventory_index = $this->first_non_empty_string([
+            $indexes['inventory'] ?? null,
+            $indexes['records'] ?? null,
+        ]);
+        $records_index = $this->first_non_empty_string([
+            $indexes['records'] ?? null,
+            $inventory_index,
+        ]);
+
         $result['meilisearchIndexes'] = [
-            'inventory' => (string) ($indexes['inventory'] ?? ''),
+            'inventory' => $inventory_index,
+            'records' => $records_index,
+            'deals' => (string) ($indexes['deals'] ?? ''),
             'knowledge' => (string) ($indexes['knowledge'] ?? ''),
         ];
 

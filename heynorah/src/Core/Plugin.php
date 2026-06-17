@@ -101,6 +101,9 @@ class Plugin
             : [];
 
         $inventory_index = (string) ($indexes['inventory'] ?? '');
+        if ($inventory_index === '') {
+            $inventory_index = (string) ($indexes['records'] ?? '');
+        }
 
         return $inventory_index !== '' ? $inventory_index : 'inventory';
     }

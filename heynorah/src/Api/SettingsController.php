@@ -234,6 +234,25 @@ class SettingsController extends BaseController
                         'error' => $verify_error,
                     ]);
 
+                    foreach ($pending_updates as $key => $value) {
+                        $this->settingsService->save($key, $value);
+                    }
+
+                    $challenge_publish = is_array($verify_result['challenge'] ?? null)
+                        ? $verify_result['challenge']
+                        : [];
+                    $connect_webhook = is_array($connect_data['webhook'] ?? null)
+                        ? $connect_data['webhook']
+                        : [];
+                    $connect_data['validated'] = false;
+                    $connect_data['webhook'] = array_merge($connect_webhook, [
+                        'challengePublishedMode' => (string) ($challenge_publish['mode'] ?? ''),
+                        'lastVerifyError' => $verify_error,
+                    ]);
+                    $this->settingsService->clear_connection_data();
+                    $this->settingsService->save_connection_data($connect_data);
+                    $this->settingsService->save_connect_error($verify_error);
+
                     return new WP_Error(
                         'rest_domain_verification_failed',
                         'Failed to verify domain challenge: ' . $verify_error,
