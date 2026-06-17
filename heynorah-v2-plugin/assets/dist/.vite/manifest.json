@@ -1,0 +1,45 @@
+{
+  "_sheet-C7A-ndTf.js": {
+    "file": "sheet-C7A-ndTf.js",
+    "name": "sheet"
+  },
+  "src/main.tsx": {
+    "file": "main.js",
+    "name": "main",
+    "src": "src/main.tsx",
+    "isEntry": true,
+    "imports": [
+      "_sheet-C7A-ndTf.js"
+    ],
+    "css": [
+      "main.css"
+    ]
+  },
+  "src/search-app.tsx": {
+    "file": "search.js",
+    "name": "search",
+    "src": "src/search-app.tsx",
+    "isEntry": true,
+    "imports": [
+      "_sheet-C7A-ndTf.js"
+    ]
+  },
+  "src/single-hmr.ts": {
+    "file": "single-hmr.js",
+    "name": "single-hmr",
+    "src": "src/single-hmr.ts",
+    "isEntry": true,
+    "imports": [
+      "src/single.css"
+    ]
+  },
+  "src/single.css": {
+    "file": "single.js",
+    "name": "single",
+    "src": "src/single.css",
+    "isEntry": true,
+    "css": [
+      "single.css"
+    ]
+  }
+}
