@@ -2,7 +2,9 @@
 /**
  * Plugin Name: HeyNorah
  * Description: HeyNorah V2 WordPress inventory and marine pack connector.
- * Version: 2.0.2
+ * Version: 2.0.3
+ * Requires at least: 6.3
+ * Requires PHP: 8.2
  * Update URI: https://github.com/fuelmedia/heynorah-plugin
  * Author: HeyNorah AI
  */
@@ -11,7 +13,7 @@ if (!defined('ABSPATH'))
     exit;
 
 if (!defined('HEYNORAH_PLUGIN_VERSION')) {
- define('HEYNORAH_PLUGIN_VERSION', '2.0.2');
+ define('HEYNORAH_PLUGIN_VERSION', '2.0.3');
 }
 
 if (file_exists(__DIR__ . '/vendor/autoload.php')) {

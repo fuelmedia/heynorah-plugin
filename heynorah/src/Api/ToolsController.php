@@ -75,8 +75,8 @@ class ToolsController extends WP_REST_Controller
         // PHP & WordPress Version
         $php_version = phpversion();
         $wp_version = get_bloginfo('version');
-        $php_required = '8.0';
-        $wp_required = '6.0';
+        $php_required = Plugin::MIN_PHP_VERSION;
+        $wp_required = Plugin::MIN_WORDPRESS_VERSION;
 
         // Database Status
         $logs_table = $wpdb->prefix . Plugin::TABLE_LOGS;

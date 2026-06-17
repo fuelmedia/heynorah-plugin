@@ -27,6 +27,9 @@ class Plugin
     public const TABLE_SETTINGS = 'heynorah_settings';
     public const TABLE_AUDIT_LOG = 'heynorah_audit_log';
     public const TABLE_WEBHOOK_EVENTS = 'heynorah_webhook_events';
+    public const MIN_WORDPRESS_VERSION = '6.3';
+    public const TESTED_WORDPRESS_VERSION = '7.0';
+    public const MIN_PHP_VERSION = '8.2';
     private const VITE_SERVER = 'http://localhost:5175';
     private SettingsService $settingsService;
     private DomainChallengeService $domainChallengeService;
@@ -288,7 +291,7 @@ class Plugin
         if ($is_development && $this->is_vite_server_available()) {
             // In development, load CSS via Vite dev server with HMR
             if (!wp_script_is('vite-client', 'enqueued')) {
-                wp_enqueue_script('vite-client', self::VITE_SERVER . '/@vite/client', [], null, true);
+                wp_enqueue_script('vite-client', self::VITE_SERVER . '/@vite/client', [], null, ['in_footer' => true]);
             }
 
             wp_enqueue_script(
@@ -296,7 +299,7 @@ class Plugin
                 self::VITE_SERVER . '/src/single-hmr.ts',
                 ['vite-client'],
                 null,
-                true
+                ['in_footer' => true]
             );
             return;
         }
@@ -385,7 +388,7 @@ class Plugin
             }
 
             if (!wp_script_is('vite-client', 'enqueued')) {
-                wp_enqueue_script('vite-client', self::VITE_SERVER . '/@vite/client', [], null, true);
+                wp_enqueue_script('vite-client', self::VITE_SERVER . '/@vite/client', [], null, ['in_footer' => true]);
             }
 
             if (!has_action('wp_print_footer_scripts', [$this, 'print_react_preamble']) && !has_action('admin_print_footer_scripts', [$this, 'print_react_preamble'])) {
@@ -393,7 +396,7 @@ class Plugin
                 add_action($action_hook, [$this, 'print_react_preamble'], 0);
             }
 
-            wp_enqueue_script($handle, self::VITE_SERVER . '/' . $entry_path, ['vite-client'], null, true);
+            wp_enqueue_script($handle, self::VITE_SERVER . '/' . $entry_path, ['vite-client'], null, ['in_footer' => true]);
         } else {
             $this->enqueue_production_assets($handle, $entry_path);
         }
@@ -477,7 +480,7 @@ class Plugin
             plugin_dir_url(dirname(__DIR__)) . 'assets/dist/' . $entry['file'],
             [],
             $js_version,
-            true
+            ['in_footer' => true]
         );
     }
 
@@ -485,7 +488,7 @@ class Plugin
     {
         $modules = ['vite-client', 'heynorah-admin-app', 'heynorah-search-app', 'heynorah-single-hmr'];
 
-        if (in_array($handle, $modules)) {
+        if (in_array($handle, $modules, true)) {
             return '<script type="module" src="' . esc_url($src) . '" id="' . esc_attr($handle) . '-js"></script>';
         }
         return $tag;

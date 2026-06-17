@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.3 - 2026-06-18
+
+- Updated static analysis to use WordPress 7.0 stubs directly instead of the older phpstan-wordpress extension.
+- Added PHPStan deprecation rules so deprecated WordPress API usage fails analysis.
+- Marked the public distribution as tested with WordPress 7.0.
+- Added WordPress and PHP requirement headers to the plugin entry file.
+- Updated script enqueue calls to use the current WordPress `$args` array format.
+
 ## 2.0.2 - 2026-06-18
 
 - Fixed WordPress update discovery for HeyNorah installs that use the `Update URI` plugin header.

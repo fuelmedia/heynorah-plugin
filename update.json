@@ -1,11 +1,12 @@
 {
   "name": "HeyNorah",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "author": "HeyNorah AI",
   "homepage": "https://github.com/fuelmedia/heynorah-plugin",
   "package_url": "https://raw.githubusercontent.com/fuelmedia/heynorah-plugin/main/heynorah.zip",
+  "requires": "6.3",
   "requires_php": "8.2",
-  "tested": "6.9",
+  "tested": "7.0",
   "description": "HeyNorah WordPress inventory connector.",
-  "changelog": "# Changelog\n\n## 2.0.2 - 2026-06-18\n\n- Fixed WordPress update discovery for HeyNorah installs that use the `Update URI` plugin header.\n- Added the WordPress `update_plugins_github.com` update hook so WordPress 5.8+ can discover public HeyNorah releases correctly.\n- Bypassed stale manifest cache during update checks and plugin details requests.\n- Added release notes to the WordPress version details modal before updating.\n\n## 2.0.1 - 2026-06-18\n\n- Published the first public distribution package with an installable ZIP and update manifest.\n"
+  "changelog": "# Changelog\n\n## 2.0.3 - 2026-06-18\n\n- Updated static analysis to use WordPress 7.0 stubs directly instead of the older phpstan-wordpress extension.\n- Added PHPStan deprecation rules so deprecated WordPress API usage fails analysis.\n- Marked the public distribution as tested with WordPress 7.0.\n- Added WordPress and PHP requirement headers to the plugin entry file.\n- Updated script enqueue calls to use the current WordPress `$args` array format.\n\n## 2.0.2 - 2026-06-18\n\n- Fixed WordPress update discovery for HeyNorah installs that use the `Update URI` plugin header.\n- Added the WordPress `update_plugins_github.com` update hook so WordPress 5.8+ can discover public HeyNorah releases correctly.\n- Bypassed stale manifest cache during update checks and plugin details requests.\n- Added release notes to the WordPress version details modal before updating.\n\n## 2.0.1 - 2026-06-18\n\n- Published the first public distribution package with an installable ZIP and update manifest.\n"
 }
