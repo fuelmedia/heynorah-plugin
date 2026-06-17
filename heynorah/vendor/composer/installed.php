@@ -3,7 +3,7 @@
         'name' => 'heynorah/worker',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '95381f9386ab4f4f4abbb7552eb6589bac51e877',
+        'reference' => '2f280c12502644302ceace3af29b0b10c6f879b3',
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,7 +13,7 @@
         'heynorah/worker' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '95381f9386ab4f4f4abbb7552eb6589bac51e877',
+            'reference' => '2f280c12502644302ceace3af29b0b10c6f879b3',
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
