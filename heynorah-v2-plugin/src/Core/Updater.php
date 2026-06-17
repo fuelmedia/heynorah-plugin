@@ -13,13 +13,11 @@ class Updater
 {
     private const MANIFEST_URL = 'https://raw.githubusercontent.com/fuelmedia/heynorah-plugin/main/update.json';
 
-    private string $pluginFile;
     private string $pluginBasename;
     private string $pluginSlug;
 
     public function __construct(string $pluginFile)
     {
-        $this->pluginFile = $pluginFile;
         $this->pluginBasename = plugin_basename($pluginFile);
         $this->pluginSlug = dirname($this->pluginBasename);
     }
@@ -39,6 +37,7 @@ class Updater
         if (!is_object($transient)) {
             return $transient;
         }
+        /** @var \stdClass $transient */
 
         $manifest = $this->fetch_manifest();
         if (!$manifest) {
@@ -52,7 +51,7 @@ class Updater
             return $transient;
         }
 
-        if (!version_compare($latest_version, HEYNORAH_PLUGIN_VERSION, '>')) {
+        if (!version_compare($latest_version, $this->current_version(), '>')) {
             return $transient;
         }
 
@@ -96,7 +95,7 @@ class Updater
         return (object) [
             'name' => (string) ($manifest['name'] ?? 'HeyNorah V2 Plugin'),
             'slug' => $this->pluginSlug,
-            'version' => (string) ($manifest['version'] ?? HEYNORAH_PLUGIN_VERSION),
+            'version' => (string) ($manifest['version'] ?? $this->current_version()),
             'author' => (string) ($manifest['author'] ?? 'HeyNorah AI'),
             'homepage' => (string) ($manifest['homepage'] ?? 'https://github.com/fuelmedia/heynorah-plugin'),
             'download_link' => (string) ($manifest['package_url'] ?? ''),
@@ -148,5 +147,10 @@ class Updater
         set_site_transient($cache_key, $decoded, 6 * HOUR_IN_SECONDS);
 
         return $decoded;
+    }
+
+    private function current_version(): string
+    {
+        return defined('HEYNORAH_PLUGIN_VERSION') ? (string) constant('HEYNORAH_PLUGIN_VERSION') : '0.0.0';
     }
 }
