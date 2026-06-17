@@ -93,7 +93,7 @@ class Updater
         }
 
         return (object) [
-            'name' => (string) ($manifest['name'] ?? 'HeyNorah V2 Plugin'),
+            'name' => (string) ($manifest['name'] ?? 'HeyNorah'),
             'slug' => $this->pluginSlug,
             'version' => (string) ($manifest['version'] ?? $this->current_version()),
             'author' => (string) ($manifest['author'] ?? 'HeyNorah AI'),

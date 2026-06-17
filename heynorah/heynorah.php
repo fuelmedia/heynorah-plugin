@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: HeyNorah V2 Plugin
+ * Plugin Name: HeyNorah
  * Description: HeyNorah V2 WordPress inventory and marine pack connector.
  * Version: 2.0.0
  * Update URI: https://github.com/fuelmedia/heynorah-plugin

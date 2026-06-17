@@ -95,6 +95,6 @@ jobs:
           else
             gh release create "$TAG" heynorah.zip update.json \
               --target "$GITHUB_SHA" \
-              --title "HeyNorah WordPress Plugin ${VERSION}" \
-              --notes "Public distribution package for HeyNorah WordPress Plugin ${VERSION}."
+              --title "HeyNorah ${VERSION}" \
+              --notes "Public distribution package for HeyNorah ${VERSION}."
           fi
