@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.5 - 2026-06-18
+
+- Migrated existing plugin settings that still point to the retired Meilisearch host.
+
 ## 2.0.4 - 2026-06-18
 
 - Fixed the production Meilisearch endpoint used by the archive search UI and search proxy.

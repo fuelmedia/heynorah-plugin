@@ -82,6 +82,10 @@ class SettingsService
             return trim(Encryption::decrypt($value));
         }
 
+        if ($key === 'meilisearch_url') {
+            return $this->normalize_meilisearch_url($value);
+        }
+
         return (string) $value;
     }
 
@@ -124,8 +128,10 @@ class SettingsService
 
         if (($key === 'webhook_secret' || $key === 'site_api_key') && !empty($value)) {
             $value = Encryption::encrypt(trim($value));
-        } elseif (in_array($key, ['api_base_url', 'meilisearch_url'], true)) {
+        } elseif ($key === 'api_base_url') {
             $value = esc_url_raw(untrailingslashit(trim($value)));
+        } elseif ($key === 'meilisearch_url') {
+            $value = $this->normalize_meilisearch_url($value);
         } else {
             $value = sanitize_text_field($value);
         }
@@ -190,7 +196,7 @@ class SettingsService
         return [
             'site_api_key' => $masked_api_key,
             'api_base_url' => $settings['api_base_url'] ?: Plugin::get_api_base_url(),
-            'meilisearch_url' => $settings['meilisearch_url'] ?: \HeyNorah\Core\Config::PROD_MS_URL,
+            'meilisearch_url' => $this->normalize_meilisearch_url($settings['meilisearch_url'] ?? ''),
             'cpt_slug' => $settings['cpt_slug'] ?? '',
             'taxonomy_slug' => $settings['taxonomy_slug'] ?? '',
             'inquiry_form_id' => $this->get('inquiry_form_id'),
@@ -237,7 +243,7 @@ class SettingsService
             $organization_data['meilisearch_url'] ?? null,
         ]);
         if ($meilisearch_url !== '') {
-            $update_data['meilisearch_url'] = esc_url_raw(untrailingslashit($meilisearch_url));
+            $update_data['meilisearch_url'] = $this->normalize_meilisearch_url($meilisearch_url);
         }
 
         if (isset($response_data['user']) && is_array($response_data['user'])) {
@@ -768,6 +774,17 @@ class SettingsService
         }
 
         return '';
+    }
+
+    private function normalize_meilisearch_url(mixed $value): string
+    {
+        $url = esc_url_raw(untrailingslashit(trim((string) $value)));
+
+        if ($url === '' || $url === 'https://latest.search.x.heynorah.ai') {
+            return \HeyNorah\Core\Config::PROD_MS_URL;
+        }
+
+        return $url;
     }
 
     private function get_webhook_meta_internal(): array
