@@ -72,8 +72,9 @@ class SearchController extends WP_REST_Controller
                 ? $organization_search_key
                 : Config::DEV_MS_SEARCH_KEY;
         } else {
-            // Production: Use fixed URL and organization's public search key
-            $ms_url = Config::PROD_MS_URL;
+            // Production: use the connected organization's configured search host.
+            $configured_ms_url = $settingsService->get('meilisearch_url');
+            $ms_url = $configured_ms_url !== '' ? $configured_ms_url : Config::PROD_MS_URL;
             $ms_key = $organization_search_key;
 
             // If no public key available, return error

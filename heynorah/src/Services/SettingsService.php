@@ -227,6 +227,19 @@ class SettingsService
             $update_data['organization_data'] = Encryption::encrypt((string) $org_json);
         }
 
+        $organization_data = is_array($response_data['organization'] ?? null)
+            ? $response_data['organization']
+            : [];
+        $meilisearch_url = $this->first_non_empty_string([
+            $response_data['meilisearchUrl'] ?? null,
+            $response_data['meilisearch_url'] ?? null,
+            $organization_data['meilisearchUrl'] ?? null,
+            $organization_data['meilisearch_url'] ?? null,
+        ]);
+        if ($meilisearch_url !== '') {
+            $update_data['meilisearch_url'] = esc_url_raw(untrailingslashit($meilisearch_url));
+        }
+
         if (isset($response_data['user']) && is_array($response_data['user'])) {
             $normalized_user = $this->normalize_user_data($response_data['user']);
             $user_json = wp_json_encode($normalized_user);
@@ -500,6 +513,10 @@ class SettingsService
         $result['id'] = (string) ($organization['id'] ?? '');
         $result['name'] = (string) ($organization['name'] ?? '');
         $result['slug'] = (string) ($organization['slug'] ?? '');
+        $result['meilisearchUrl'] = $this->first_non_empty_string([
+            $organization['meilisearchUrl'] ?? null,
+            $organization['meilisearch_url'] ?? null,
+        ]);
         $result['meilisearchPublicKey'] = $this->first_non_empty_string([
             $organization['meilisearchPublicKey'] ?? null,
             $organization['publicKey'] ?? null,

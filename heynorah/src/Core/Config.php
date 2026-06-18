@@ -30,5 +30,5 @@ class Config
     public const DEV_MS_URL = 'http://localhost:7700';
     public const DEV_MS_KEY = 'MOkGsfWBIm54yHsAp8x55KqNVs4WuX9fg8xQlLriNOM=';
     public const DEV_MS_SEARCH_KEY = 'MOkGsfWBIm54yHsAp8x55KqNVs4WuX9fg8xQlLriNOM=';
-    public const PROD_MS_URL = 'https://latest.search.x.heynorah.ai';
+    public const PROD_MS_URL = 'https://search.os.x.heynorah.ai';
 }

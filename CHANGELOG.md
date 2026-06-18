@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.4 - 2026-06-18
+
+- Fixed the production Meilisearch endpoint used by the archive search UI and search proxy.
+- Persisted the Meilisearch URL returned by platform connect so each site uses the same search host as its organization.
+
 ## 2.0.3 - 2026-06-18
 
 - Updated static analysis to use WordPress 7.0 stubs directly instead of the older phpstan-wordpress extension.
